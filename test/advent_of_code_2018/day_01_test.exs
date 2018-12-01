@@ -24,12 +24,32 @@ defmodule AdventOfCode2018.Day01Test do
     assert result == -6
   end
 
-  @tag :skip
-  test "part2" do
-    input = nil
+  test "part2 test case 1" do
+    input = input!("+1, -1")
     result = part2(input)
 
-    assert result
+    assert result == 0
+  end
+
+  test "part2 test case 2" do
+    input = input!("+3, +3, +4, -2, -4")
+    result = part2(input)
+
+    assert result == 10
+  end
+
+  test "part2 test case 3" do
+    input = input!("-6, +3, +8, +5, -6")
+    result = part2(input)
+
+    assert result == 5
+  end
+
+  test "part2 test case 4" do
+    input = input!("+7, +7, -2, -7, -4")
+    result = part2(input)
+
+    assert result == 14
   end
 
   def input!(str) do
