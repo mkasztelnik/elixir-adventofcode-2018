@@ -5,10 +5,10 @@ defmodule Mix.Tasks.D01.P1 do
 
   @shortdoc "Day 01 Part 1"
   def run(_) do
-    input = nil
+    input = AdventOfCode2018.input!("inputs/d01.p1.txt")
 
     input
     |> part1()
-    |> IO.inspect(label: "Part 1 Results") 
+    |> IO.inspect(label: "Part 1 Results")
   end
-end   
+end
