@@ -5,7 +5,7 @@ defmodule Mix.Tasks.D01.P1 do
 
   @shortdoc "Day 01 Part 1"
   def run(_) do
-    input = AdventOfCode2018.input!("inputs/d01.p1.txt")
+    input = AdventOfCode2018.input!("inputs/d01.txt")
 
     input
     |> part1()
