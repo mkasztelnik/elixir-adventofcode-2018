@@ -20,5 +20,28 @@ defmodule AdventOfCode2018.Day02 do
   end
 
   def part2(args) do
+    codepoints = Enum.map(args, &String.codepoints/1)
+    different? = fn x, y -> x != y end
+
+    (for x <- codepoints, y <- codepoints, different?.(x, y), do: {x, y})
+    |> Enum.find(&one_difference?/1)
+    |> remove_difference
+  end
+
+  defp one_difference?(couple) do
+    difference_count(couple) == 1
+  end
+
+  defp difference_count({first, second}) do
+    Enum.zip(first, second)
+    |> Enum.reject(fn {x, y} -> x == y end)
+    |> length
+  end
+
+  defp remove_difference({first, second}) do
+    Enum.zip(first, second)
+    |> Enum.reject(fn {x, y} -> x != y end)
+    |> Enum.map(fn {x, _} -> x end)
+    |> Enum.join
   end
 end
