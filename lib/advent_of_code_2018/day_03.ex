@@ -5,9 +5,7 @@ defmodule AdventOfCode2018.Day03 do
       file_stream
       |> Stream.map(&extract_claim/1)
       |> Stream.flat_map(&to_fields/1)
-      |> Enum.reduce(%{}, fn x, acc ->
-        Map.update(acc, x, 1, &(&1 + 1))
-      end)
+      |> Enum.reduce(%{}, fn x, acc -> Map.update(acc, x, 1, &(&1 + 1)) end)
       |> Enum.count(fn
         {_, 1} -> false
         {_, _} -> true
@@ -32,22 +30,21 @@ defmodule AdventOfCode2018.Day03 do
   end
 
   def part2(file_stream) do
-    plans =
-      file_stream
-      |> Stream.map(&extract_claim/1)
-      |> Stream.map(fn %{"id" => id} = claim ->
-        {id, MapSet.new(to_fields(claim))}
-      end)
+    plans = file_stream |> Enum.map(&extract_claim/1)
 
     plans
-    |> Enum.reduce(plans, fn {id, fields}, acc ->
-      acc |> Enum.filter(fn {acc_id, acc_fields} ->
-        id == acc_id || MapSet.disjoint?(acc_fields, fields)
+    |> Enum.find(fn plan ->
+      Enum.all?(plans, fn candidate ->
+        plan == candidate || disjoint?(plan, candidate)
       end)
     end)
     |> unique
   end
 
-  def unique([{id, _}]), do: String.to_integer(id)
-  def unique(_), do: "cannot find unique claim"
+  defp disjoint?(%{"left" => ll, "top" => lt, "height" => lh, "width" => lw},
+                 %{"left" => rl, "top" => rt, "height" => rh, "width" => rw}) do
+    ll + lw <= rl || lt + lh <= rt || ll >= rl + rw || lt >= rt + rh
+  end
+
+  def unique(%{"id" => id}), do: String.to_integer(id)
 end
