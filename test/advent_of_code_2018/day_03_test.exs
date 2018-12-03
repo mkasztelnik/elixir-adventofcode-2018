@@ -14,11 +14,14 @@ defmodule AdventOfCode2018.Day03Test do
     assert result == 4
   end
 
-  @tag :skip
   test "part2" do
-    input = nil
-    result = part2(input)
+    {:ok, io} = StringIO.open("""
+                              #1 @ 1,3: 4x4
+                              #2 @ 3,1: 4x4
+                              #3 @ 5,5: 2x2
+                              """)
+    result = part2(IO.stream(io, :line))
 
-    assert result
+    assert result == 3
   end
 end
