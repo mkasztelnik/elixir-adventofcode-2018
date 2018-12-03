@@ -13,3 +13,8 @@ mix d01.p2
 mix d25.p1
 mix d25.p2
 ```
+
+## Rules
+  1. Day N puzzles should be solved before José's day N puzzles solving screencast.
+  1. Improvements can be applied using knowledge learned from previous day puzzles
+     solving José screencast.
