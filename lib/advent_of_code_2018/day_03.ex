@@ -2,20 +2,16 @@ defmodule AdventOfCode2018.Day03 do
   @pattern ~r/#(?<id>\d+) @ (?<left>\d+),(?<top>\d+): (?<width>\d+)x(?<height>\d+)/
 
   def part1(file_stream) do
-    {_, duplicates} =
       file_stream
       |> Stream.map(&extract_claim/1)
       |> Stream.flat_map(&to_fields/1)
-      |> Enum.reduce({MapSet.new, MapSet.new}, fn x, {visited, duplicates} ->
-        new_duplicates = if MapSet.member?(visited, x),
-                          do: MapSet.put(duplicates, x),
-                          else: duplicates
-        new_visited = MapSet.put(visited, x)
-
-        {new_visited, new_duplicates}
+      |> Enum.reduce(%{}, fn x, acc ->
+        Map.update(acc, x, 1, &(&1 + 1))
       end)
-
-    MapSet.size(duplicates)
+      |> Enum.count(fn
+        {_, 1} -> false
+        {_, _} -> true
+      end)
   end
 
   defp to_fields(%{"left" => l, "top" => t, "height" => h, "width" => w}) do
@@ -31,7 +27,7 @@ defmodule AdventOfCode2018.Day03 do
       "top" => String.to_integer(t),
       "height" => String.to_integer(h),
       "width" => String.to_integer(w),
-      "id" => String.to_integer(id)
+      "id" => id
     }
   end
 
@@ -52,6 +48,6 @@ defmodule AdventOfCode2018.Day03 do
     |> unique
   end
 
-  def unique([{id, _}]), do: id
+  def unique([{id, _}]), do: String.to_integer(id)
   def unique(_), do: "cannot find unique claim"
 end
