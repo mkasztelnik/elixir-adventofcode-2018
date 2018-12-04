@@ -12,20 +12,36 @@ defmodule AdventOfCode2018.Day04 do
     {id, {_, sleep_intervals}} =
       Enum.max_by(grouped_sleep_time, fn {_, {count, _}} -> count end)
 
-    id * max_frequent_minute(sleep_intervals)
+    {minute, _} = max_frequent(sleep_intervals)
+    id * minute
   end
 
-  defp max_frequent_minute(sleep_intervals) do
-    {minute, _} =
-      sleep_intervals
-      |> Enum.flat_map(fn {from, to} ->
-        for x <- from..to, do: x
+  def part2(file_stream) do
+    file_stream
+    |> grouped_sleep_time()
+    |> strategy2()
+  end
+
+  defp strategy2(grouped_sleep_time) do
+    {id, {minute, _}} =
+      grouped_sleep_time
+      |> Enum.map(fn {id, {_, sleep_intervals}} ->
+        {id, max_frequent(sleep_intervals)}
       end)
-      |> Enum.reduce(%{}, fn x, acc ->
-        Map.update(acc, x, 1, &(&1 + 1))
-      end)
-      |> Enum.max_by(fn {_, count} -> count end)
-    minute
+      |> Enum.max_by(fn {_, {_, count}} -> count end)
+
+    id * minute
+  end
+
+  defp max_frequent(sleep_intervals) do
+    sleep_intervals
+    |> Enum.flat_map(fn {from, to} ->
+      for x <- from..to, do: x
+    end)
+    |> Enum.reduce(%{}, fn x, acc ->
+      Map.update(acc, x, 1, &(&1 + 1))
+    end)
+    |> Enum.max_by(fn {_, count} -> count end)
   end
 
   def grouped_sleep_time(file_stream) do
@@ -81,8 +97,5 @@ defmodule AdventOfCode2018.Day04 do
   defp action(event) do
     %{"id" => id} = Regex.named_captures(@guard_id, event)
     {:guard, String.to_integer(id)}
-  end
-
-  def part2(_args) do
   end
 end
