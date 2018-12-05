@@ -1,4 +1,6 @@
 defmodule AdventOfCode2018.Day05 do
+  @offset ?a - ?A
+
   def part1(polymer) do
     {reduced, _ } =
       polymer
@@ -8,21 +10,16 @@ defmodule AdventOfCode2018.Day05 do
     length(reduced)
   end
 
+  defguard is_reactive(a, b) when abs(a - b) == @offset
+
   defp reduce(polymer) do
     reduce(polymer, [], MapSet.new, false)
   end
-  defp reduce([first, second | tail] = polymer, acc, reactive, modified) do
-    case abs(first - second) do
-      32 -> reduce(tail, acc, MapSet.put(reactive, min(first, second)), true)
-      _  -> reduce([second | tail], [first | acc], reactive, modified)
-    end
+  defp reduce([first, second | tail], acc, reactive, modified) when is_reactive(first, second) do
+    reduce(tail, acc, MapSet.put(reactive, min(first, second)), true)
   end
-  defp reduce([head], acc, reactive, false) do
-    {[head | acc], reactive}
-  end
-  defp reduce([head], acc, reactive, true) do
-    [head | acc]
-    |> reduce([], reactive, false)
+  defp reduce([head | tail], acc, reactive, modified) do
+    reduce(tail, [head | acc], reactive, modified)
   end
   defp reduce([], acc, reactive, false) do
     {acc, reactive}
@@ -40,7 +37,7 @@ defmodule AdventOfCode2018.Day05 do
       {reduced, _} =
         Enum.reject(polymer_charlist, fn ch ->
           diff = abs(ch - reactive)
-          diff == 0 || diff == 32
+          diff == 0 || diff == @offset
         end)
         |> reduce()
       length(reduced)
