@@ -9,7 +9,7 @@ defmodule AdventOfCode2018.Day06 do
       %MinDistanceMap{}
     end
 
-    def max_finite_field_size(%MinDistanceMap{data: data}, infinities) do
+    def max_finite_field(%MinDistanceMap{data: data}, infinities) do
       finite? = fn point -> !MapSet.member?(infinities, point) end
       frequency_map = for {_, {_, [coordinate]}} <- data, finite?.(coordinate),
                         do: coordinate, into: FrequencyMap.new
@@ -38,6 +38,34 @@ defmodule AdventOfCode2018.Day06 do
     end
   end
 
+
+  defmodule DistanceSumMap do
+    defstruct data: %{}
+
+    def new do
+      %DistanceSumMap{}
+    end
+
+    def area_with_distance_less_than(%DistanceSumMap{data: data}, max_distance) do
+      data
+      |> Enum.count(fn {_, distance} -> distance < max_distance end)
+    end
+
+    defimpl Collectable do
+      def into(%DistanceSumMap{data: data}) do
+        collector_fun = fn
+          data, {:cont, {{c_x, c_y} = coordinate, {p_x, p_y}}} ->
+            distance = abs(c_x - p_x) + abs(c_y - p_y)
+            Map.update(data, coordinate, distance, &(&1 + distance))
+          data, :done -> %DistanceSumMap{data: data}
+          _, :halt -> :ok
+        end
+
+        {data, collector_fun}
+      end
+    end
+  end
+
   def part1(file_stream) do
     coordinates = to_coordinates(file_stream)
 
@@ -53,9 +81,24 @@ defmodule AdventOfCode2018.Day06 do
     infinities = find_infinities(min_distance_map, boundries)
 
     {_, field_size} =
-      MinDistanceMap.max_finite_field_size(min_distance_map, infinities)
+      MinDistanceMap.max_finite_field(min_distance_map, infinities)
 
     field_size
+  end
+
+  def part2(file_stream, max_distance) do
+    coordinates = to_coordinates(file_stream)
+
+    boundries = boundries(coordinates)
+    {{x_min, x_max}, {y_min, y_max}} = boundries
+
+    distance_sum_map = for x <- x_min..x_max,
+                           y <- y_min..y_max,
+                           coordinate <- coordinates,
+                         do: {{x, y}, coordinate},
+                         into: DistanceSumMap.new
+
+    DistanceSumMap.area_with_distance_less_than(distance_sum_map, max_distance)
   end
 
   defp find_infinities(%MinDistanceMap{data: data}, {{x_min, x_max}, {y_min, y_max}}) do
@@ -90,6 +133,4 @@ defmodule AdventOfCode2018.Day06 do
     end)
   end
 
-  def part2(args) do
-  end
 end
