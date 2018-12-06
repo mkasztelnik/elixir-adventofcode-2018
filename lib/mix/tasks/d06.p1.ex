@@ -7,6 +7,9 @@ defmodule Mix.Tasks.D06.P1 do
   def run(_) do
     input = File.stream!("inputs/d06.txt")
 
+    # 46320
+    # input = File.stream!("inputs/d06-notmy.txt")
+
     input
     |> part1()
     |> IO.inspect(label: "Part 1 Results")
