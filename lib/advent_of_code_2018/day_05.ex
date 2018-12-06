@@ -15,7 +15,7 @@ defmodule AdventOfCode2018.Day05 do
   defp reduce(polymer) do
     reduce(polymer, [], MapSet.new, false)
   end
-  defp reduce([first, second | tail], acc, reactive, modified) when is_reactive(first, second) do
+  defp reduce([first, second | tail], acc, reactive, _) when is_reactive(first, second) do
     reduce(tail, acc, MapSet.put(reactive, min(first, second)), true)
   end
   defp reduce([head | tail], acc, reactive, modified) do
