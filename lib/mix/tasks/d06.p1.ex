@@ -5,10 +5,10 @@ defmodule Mix.Tasks.D06.P1 do
 
   @shortdoc "Day 06 Part 1"
   def run(_) do
-    input = File.stream!("inputs/d06.txt")
+    # input = File.stream!("inputs/d06.txt")
 
-    # 46320
-    # input = File.stream!("inputs/d06-notmy.txt")
+    IO.inspect(46320, label: "valid")
+    input = File.stream!("inputs/d06-notmy.txt")
 
     input
     |> part1()

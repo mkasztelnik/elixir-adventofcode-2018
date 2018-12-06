@@ -9,8 +9,8 @@ defmodule AdventOfCode2018.Day06 do
       %MinDistanceMap{}
     end
 
-    def max_finite_field_size(%MinDistanceMap{data: data}, {{x_min, x_max}, {y_min, y_max}}) do
-      finite? = fn {x, y} -> x != x_min && x != x_max && y != y_min && y != y_max end
+    def max_finite_field_size(%MinDistanceMap{data: data}, infinities) do
+      finite? = fn point -> !MapSet.member?(infinities, point) end
       frequency_map = for {_, {_, [coordinate]}} <- data, finite?.(coordinate),
                         do: coordinate, into: FrequencyMap.new
 
@@ -25,9 +25,9 @@ defmodule AdventOfCode2018.Day06 do
             init_value = {point_distance, [point]}
             Map.update(data, coordinate, init_value, fn {distance, coordinates} ->
               cond do
-                distance - point_distance > 0 -> {point_distance, [point]}
-                distance == point_distance    -> {distance, [point | coordinates]}
-                true                          -> {distance, coordinates}
+                distance == point_distance -> {distance, [point | coordinates]}
+                distance > point_distance  -> init_value
+                true                       -> {distance, coordinates}
               end
             end)
           data, :done -> %MinDistanceMap{data: data}
@@ -41,20 +41,34 @@ defmodule AdventOfCode2018.Day06 do
 
   def part1(file_stream) do
     coordinates = to_coordinates(file_stream)
+
     boundries = boundries(coordinates)
     {{x_min, x_max}, {y_min, y_max}} = boundries
 
-
-    min_distance_map = for x <- x_min..x_max,
-                           y <- y_min..y_max,
+    min_distance_map = for x <- (x_min - 1)..(x_max + 1),
+                           y <- (y_min - 1)..(y_max + 1),
                            coordinate <- coordinates,
                          do: {{x, y}, coordinate},
                          into: MinDistanceMap.new
 
+    infinities = find_infinities(min_distance_map, boundries)
+                 # |> IO.inspect(label: "infinities")
+
     {_, field_size} =
-      MinDistanceMap.max_finite_field_size(min_distance_map, boundries)
+      MinDistanceMap.max_finite_field_size(min_distance_map, infinities)
 
     field_size
+  end
+
+  defp find_infinities(%MinDistanceMap{data: data}, {{x_min, x_max}, {y_min, y_max}}) do
+    data
+    |> Enum.reduce(MapSet.new, fn {{x, y}, {_, points}}, acc ->
+      if x in x_min..x_max && y in y_min..y_max do
+        acc
+      else
+        MapSet.union(acc, MapSet.new(points))
+      end
+    end)
   end
 
   defp boundries(coordinates) do
