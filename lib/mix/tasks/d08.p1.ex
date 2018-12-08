@@ -5,7 +5,7 @@ defmodule Mix.Tasks.D08.P1 do
 
   @shortdoc "Day 08 Part 1"
   def run(_) do
-    input = nil
+    input = File.read!("inputs/d08.txt") |> String.trim
 
     input
     |> part1()
