@@ -72,13 +72,14 @@ defmodule AdventOfCode2018.Day06 do
     boundries = boundries(coordinates)
     {{x_min, x_max}, {y_min, y_max}} = boundries
 
-    min_distance_map = for x <- (x_min - 1)..(x_max + 1),
-                           y <- (y_min - 1)..(y_max + 1),
+    min_distance_map = for x <- x_min..x_max,
+                           y <- y_min..y_max,
                            coordinate <- coordinates,
                          do: {{x, y}, coordinate},
                          into: MinDistanceMap.new
 
     infinities = find_infinities(min_distance_map, boundries)
+                 |> IO.inspect(label: "infinities")
 
     {_, field_size} =
       MinDistanceMap.max_finite_field(min_distance_map, infinities)
@@ -105,10 +106,10 @@ defmodule AdventOfCode2018.Day06 do
     data
     |> Enum.reduce(MapSet.new, fn
       {{x, y}, {_, [point]}}, acc ->
-        if x in x_min..x_max && y in y_min..y_max do
-          acc
-        else
+        if x in [x_min, x_max] ||  y in [y_min, y_max] do
           MapSet.put(acc, point)
+        else
+          acc
         end
       _ , acc-> acc
     end)
