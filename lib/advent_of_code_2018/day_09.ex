@@ -38,7 +38,9 @@ defmodule AdventOfCode2018.Day09 do
     {new_circle, scores}
   end
 
-  def part2(args) do
+  def part2(input) do
+    {players_count, max_marble} = marble_mania_input(input)
+    high_score({players_count, max_marble * 100})
   end
 
   defparsecp :marble_mania_parse_input,
