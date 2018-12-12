@@ -3,12 +3,29 @@ defmodule AdventOfCode2018.Day12Test do
 
   import AdventOfCode2018.Day12
 
-  @tag :skip
   test "part1" do
-    input = nil
-    result = part1(input)
+    {:ok, io} = StringIO.open("""
+        initial state: #..#.#..##......###...###
 
-    assert result
+        ...## => #
+        ..#.. => #
+        .#... => #
+        .#.#. => #
+        .#.## => #
+        .##.. => #
+        .#### => #
+        #.#.# => #
+        #.### => #
+        ##.#. => #
+        ##.## => #
+        ###.. => #
+        ###.# => #
+        ####. => #
+        """)
+
+    result = part1(IO.stream(io, :line))
+
+    assert result == 325
   end
 
   @tag :skip
