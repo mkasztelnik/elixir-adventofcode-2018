@@ -13,10 +13,10 @@ defmodule AdventOfCode2018.Day12 do
     {result, shift} =
       Enum.reduce_while(generations_count..1, {initial_state, 0}, fn i, {state, shift} = acc ->
         {new_state, new_shift} = new_acc = tick(acc, rules)
-        case new_state == state do
-          true -> {:halt, {new_state, new_shift + (new_shift - shift) * (i - 1)}}
-          false -> {:cont, new_acc}
-        end
+
+        if new_state == state,
+          do: {:halt, {new_state, new_shift + (new_shift - shift) * (i - 1)}},
+          else: {:cont, new_acc}
       end)
 
     {sum, _} =
@@ -34,63 +34,71 @@ defmodule AdventOfCode2018.Day12 do
   end
 
   defp prepare({[?., ?., ?., ?., ?. | _] = [_ | tail], shift}), do: prepare({tail, shift + 1})
-  defp prepare({[?# | _] = state, shift}),             do: {[?., ?., ?., ?. | state], shift - 4}
-  defp prepare({[?., ?# | _] = state, shift}),         do: {[?., ?., ?. | state], shift - 3}
-  defp prepare({[?., ?., ?# | _] = state, shift}),     do: {[?., ?. | state], shift - 2}
+  defp prepare({[?# | _] = state, shift}), do: {[?., ?., ?., ?. | state], shift - 4}
+  defp prepare({[?., ?# | _] = state, shift}), do: {[?., ?., ?. | state], shift - 3}
+  defp prepare({[?., ?., ?# | _] = state, shift}), do: {[?., ?. | state], shift - 2}
   defp prepare({[?., ?., ?., ?# | _] = state, shift}), do: {[?. | state], shift - 1}
   defp prepare({[?., ?., ?., ?. | _] = state, shift}), do: {state, shift}
 
   defp do_tick([?., ?., ?., ?., ?.], _) do
     []
   end
+
   defp do_tick([?., ?., ?., ?.], _) do
     []
   end
+
   defp do_tick([?., ?., ?.], _) do
     []
   end
+
   defp do_tick([?., ?.], _) do
     []
   end
+
   defp do_tick([?.], _) do
     []
   end
+
   defp do_tick([x1, x2, x3, x4, x5 | _] = [_ | tail], rules) do
     [val(rules, {x1, x2, x3, x4, x5}) | do_tick(tail, rules)]
   end
+
   defp do_tick([x1, x2, x3, x4] = [_ | tail], rules) do
     [val(rules, {x1, x2, x3, x4, ?.}) | do_tick(tail, rules)]
   end
+
   defp do_tick([x1, x2, x3] = [_ | tail], rules) do
     [val(rules, {x1, x2, x3, ?., ?.}) | do_tick(tail, rules)]
   end
+
   defp do_tick([x1, x2] = [_ | tail], rules) do
     [val(rules, {x1, x2, ?., ?., ?.}) | do_tick(tail, rules)]
   end
+
   defp do_tick([x1], rules) do
     [val(rules, {x1, ?., ?., ?., ?.})]
   end
 
   defp val(rules, pots) do
-    case MapSet.member?(rules, pots) do
-      true -> ?#
-      false -> ?.
-    end
+    if MapSet.member?(rules, pots), do: ?#, else: ?.
   end
 
   defp parse(file_stream) do
-    file_stream
-    |> Enum.reduce({nil, MapSet.new}, &parse_line/2)
+    Enum.reduce(file_stream, {nil, MapSet.new()}, &parse_line/2)
   end
 
-  defp parse_line(<<x1::utf8, x2::utf8, x3::utf8, x4::utf8, x5::utf8>> <> " => #" <> _,
-                  {initial_state, rules}) do
+  defp parse_line(
+         <<x1::utf8, x2::utf8, x3::utf8, x4::utf8, x5::utf8>> <> " => #" <> _,
+         {initial_state, rules}
+       ) do
     {initial_state, MapSet.put(rules, {x1, x2, x3, x4, x5})}
   end
 
   defp parse_line("initial state: " <> rest, {_, rules}) do
     {rest |> String.trim() |> String.to_charlist(), rules}
   end
+
   defp parse_line(_, acc) do
     acc
   end
