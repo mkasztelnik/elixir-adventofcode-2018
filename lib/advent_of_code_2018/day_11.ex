@@ -1,4 +1,7 @@
 defmodule AdventOfCode2018.Day11 do
+  # Optimal solution can be implemented using this algorithm:
+  # https://en.wikipedia.org/wiki/Summed-area_table
+
   def part1(grid_serial_number) do
     {point, _} =
       grid(grid_serial_number)
