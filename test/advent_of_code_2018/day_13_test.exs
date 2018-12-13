@@ -3,12 +3,11 @@ defmodule AdventOfCode2018.Day13Test do
 
   import AdventOfCode2018.Day13
 
-  @tag :skip
   test "part1" do
-    input = nil
+    input = File.stream!("inputs/d13-test.txt")
     result = part1(input)
 
-    assert result
+    assert result == {7, 3}
   end
 
   @tag :skip
