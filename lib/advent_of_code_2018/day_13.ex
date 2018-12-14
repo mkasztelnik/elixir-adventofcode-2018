@@ -1,19 +1,30 @@
 defmodule AdventOfCode2018.Day13 do
   def part1(file_stream) do
-    {board, carts} =
-      file_stream
-      |> parse()
+    {board, carts} = file_stream |> parse()
 
 
     Stream.cycle([1])
     |> Enum.reduce_while(carts, fn _, carts ->
-      {new_carts, first_conflict} =
-        carts
-        |> tick(board)
+      {new_carts, first_conflict} = tick(carts, board)
 
       case first_conflict do
         nil -> {:cont, sort(new_carts) }
         conflict -> {:halt, conflict}
+      end
+    end)
+  end
+
+  def part2(file_stream) do
+    {board, carts} = file_stream |> parse()
+
+
+    Stream.cycle([1])
+    |> Enum.reduce_while(carts, fn _, carts ->
+      new_carts = reduce_tick(carts, board)
+
+      case new_carts do
+        [{_, _, point}] -> {:halt, point}
+        _ -> {:cont, sort(new_carts) }
       end
     end)
   end
@@ -62,6 +73,44 @@ defmodule AdventOfCode2018.Day13 do
       end)
 
     {new_carts, conflicted}
+  end
+
+  defp reduce_tick(carts, board) do
+    all =
+      carts |> Enum.reduce(MapSet.new, fn {_, _, point}, acc ->
+        MapSet.put(acc, point)
+      end)
+
+    {new_carts, _, _} =
+      carts
+      |> Enum.reduce({[], all, MapSet.new()}, fn {_, _, point} = cart, {carts, all, deleted} ->
+        case MapSet.member?(deleted, point) do
+          false ->
+            new_point = next_point(cart)
+
+            case MapSet.member?(all, new_point) do
+              true ->
+                {
+                  Enum.reject(carts, fn {_, _, cart_point} -> cart_point == new_point end),
+                  MapSet.delete(all, point),
+                  MapSet.put(deleted, new_point)
+                }
+              _ ->
+                board_point = board_point(board, new_point)
+                {direction, intersection_direction} = next_direction(cart, board_point)
+
+                {
+                  [{direction, intersection_direction, new_point} | carts],
+                  all |> MapSet.delete(point) |> MapSet.put(new_point),
+                  deleted
+                }
+            end
+          true ->
+            {carts, all, deleted}
+        end
+      end)
+
+    new_carts
   end
 
   defp next_point({:left, _, {x, y}}), do: {x - 1, y}
@@ -132,6 +181,4 @@ defmodule AdventOfCode2018.Day13 do
     acc
   end
 
-  def part2(args) do
-  end
 end
