@@ -5,10 +5,9 @@ defmodule Mix.Tasks.D14.P1 do
 
   @shortdoc "Day 14 Part 1"
   def run(_) do
-    input = nil
 
-    input
-    |> part1()
+    # part1([7, 0, 4, 3, 2, 1], 10)
+    part1([3, 7], 704321)
     |> IO.inspect(label: "Part 1 Results")
   end
 end
