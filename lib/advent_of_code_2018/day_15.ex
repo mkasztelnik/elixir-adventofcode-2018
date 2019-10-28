@@ -1,9 +1,81 @@
 defmodule AdventOfCode2018.Day15 do
   def part1(file_stream) do
-    {board, players, width, height} = parse(file_stream)
-
     {_, remaining_players, rounds_count} =
-    Stream.cycle([1])
+      file_stream
+      |> parse()
+      |> play()
+
+    hp_count = hp_count(remaining_players)
+
+    IO.puts("------------------------------------------------------")
+    IO.puts("#{rounds_count} * #{hp_count} = #{hp_count * rounds_count}")
+
+    hp_count * rounds_count
+  end
+
+  def part2(file_stream) do
+    {board, players, width, height} = parse(file_stream)
+    # elves_count = Enum.count(players, fn {_, {_, type, _, _}} -> type == ?E end)
+    # from_to = {3, 200}
+
+    # {force, remaining_players, rounds_count} =
+    # Stream.cycle([1])
+    # |> Enum.reduce_while({from_to, {nil, nil}}, fn _, {{from, to}, {win_players, round}} ->
+    #   case {from, to} do
+    #     {val, val} ->
+    #       {:halt, {val, win_players, round}}
+    #     _ ->
+    #       middle = from + div(to - from, 2)
+    #       new_players = set_elves_impact_force(players, middle)
+    #       {_, remaining_players, rounds_count} =
+    #         play({board, new_players, width, height})
+    #
+    #       if elves_win?(remaining_players, elves_count) do
+    #         if middle - 1 == from,
+    #           do: {:halt, {middle, remaining_players, rounds_count}},
+    #         else: {:cont, {{from, middle}, {remaining_players, rounds_count}}}
+    #       else
+    #         if middle + 1 == to,
+    #           do: {:halt, {to, win_players, round}},
+    #         else: {:cont, {{middle, to}, {win_players, round}}}
+    #       end
+    #   end
+    # end)
+    #
+    new_players = set_elves_impact_force(players, 19)
+    {_, remaining_players, rounds_count} =
+      {board, new_players, width, height}
+      |> play()
+
+    hp_count = hp_count(remaining_players)
+
+    IO.puts("------------------------------------------------------")
+    IO.puts("#{rounds_count} * #{hp_count} = #{hp_count * rounds_count}")
+    # IO.puts("#{rounds_count} * #{hp_count} = #{hp_count * rounds_count} (elve force #{force})")
+
+    hp_count * rounds_count
+  end
+
+  defp hp_count(remaining_players) do
+    Enum.reduce(remaining_players, 0, fn {_, {_, _, hp, _}}, acc ->  acc + hp end)
+  end
+
+  defp elves_win?(remaining_players, elves_count) do
+    !Enum.any?(remaining_players, fn {_, {_, type, _, _}} -> type == ?G end) &&
+      Enum.count(remaining_players) == elves_count
+  end
+
+  defp set_elves_impact_force(players, impact_force) do
+    players
+    |> Enum.map(fn
+      {point, {uid, ?E, hp, _}} -> {point, {uid, ?E, hp, impact_force}}
+      goblin -> goblin
+    end)
+  end
+
+  defp play({board, players, width, height}) do
+    # Stream.cycle([1])
+    1..30
     |> Enum.reduce_while({board, players, 1}, fn _, {board, players, count} ->
       {new_board, new_players, status} =
         round(board, players)
@@ -18,13 +90,6 @@ defmodule AdventOfCode2018.Day15 do
           {:halt, {new_board, new_players, count - 1}}
       end
     end)
-
-    hp_count = Enum.reduce(remaining_players, 0, fn {_, {_, hp}}, acc ->  acc + hp end)
-
-    IO.puts("------------------------------------------------------")
-    IO.puts("#{rounds_count} * #{hp_count} = #{hp_count * rounds_count}")
-
-    hp_count * rounds_count
   end
 
   defp round(board, players) do
@@ -32,10 +97,11 @@ defmodule AdventOfCode2018.Day15 do
 
     players
     |> sort_players()
+    |> IO.inspect(label: "Sorted players")
     |> Enum.reduce_while({board, players_map, nil}, fn player, {board, players_map, _} = acc ->
       case still_alive?(players_map, player) do
         true ->
-          {_, _, status} = result =
+          {_, new_players_map, status} = result =
             {board, players_map, player}
             |> move()
             |> attack()
@@ -81,7 +147,7 @@ defmodule AdventOfCode2018.Day15 do
   end
   defp optimal_move(board, [{direction, point} = candidate | rest], targets, visited) do
     if point in targets do
-      direction
+      candidate
     else
       next_possible_points = next_possible_points(board, visited, candidate)
 
@@ -96,28 +162,30 @@ defmodule AdventOfCode2018.Day15 do
   end
 
   defp finished?(players) do
-    goblin = Enum.find(players, fn {_, {type, _}} -> type == ?G end)
-    elve = Enum.find(players, fn {_, {type, _}} -> type == ?E end)
+    goblin = Enum.find(players, fn {_, {_, type, _, _}} -> type == ?G end)
+    elve = Enum.find(players, fn {_, {_, type, _, _}} -> type == ?E end)
 
     goblin == nil || elve == nil
   end
 
-  defp move({board, players_map, {point, {type, hp}} = player}) do
+  defp move({board, players_map, {point, {uid, type, _, _}} = player}) do
     case move_candidate(board, players_map, player) do
       nil ->
         {board, players_map, player}
-      new_point ->
+      {new_point, target} ->
+        IO.puts("#{uid} move to #{inspect new_point} (target #{inspect target})")
         new_board = board |> Map.put(point, ?.) |> Map.put(new_point, type)
-        new_players_map = players_map |> Map.delete(point) |> Map.put(new_point, {type, hp})
+        player_data = Map.get(players_map, point)
+        new_players_map = players_map |> Map.delete(point) |> Map.put(new_point, player_data)
 
-        {new_board, new_players_map, {new_point, {type, hp}}}
+        {new_board, new_players_map, {new_point, player_data}}
     end
   end
 
   defp targets(board, players, player) do
     enemy = enemy(player)
     players
-    |> Enum.flat_map(fn {point, {type, _}} ->
+    |> Enum.flat_map(fn {point, {_, type, _, _}} ->
       case type do
         ^enemy ->
           neighboars_points(point)
@@ -136,27 +204,28 @@ defmodule AdventOfCode2018.Day15 do
     end
   end
 
-  defp still_alive?(players_map, {point, {type, _}}) do
+  defp still_alive?(players_map, {point, {uid, type, _, _}}) do
     case Map.get(players_map, point) do
       nil -> false
-      {^type, _} -> true
+      {^uid, ^type, _, _} -> true
       _ -> false
     end
   end
 
-  defp do_attack({board, players_map}, player) do
+  defp do_attack({board, players_map}, {_, {_, _, _, force}} = player) do
     case attack_candidate(board, players_map, player) do
       nil -> {board, players_map, :cont}
-      target -> perform_attack({board, players_map}, target)
+      target -> perform_attack({board, players_map}, player, target)
     end
   end
 
-  defp perform_attack({board, players_map}, target) do
-    {type, health}  = Map.get(players_map, target)
+  defp perform_attack({board, players_map}, {_, {player_uid, _, _, demage}}, target) do
+    {uid, type, health, force}  = Map.get(players_map, target)
+    IO.puts("#{player_uid} is performing attack (with #{demage} demage) on #{uid} #{inspect target} (#{health - demage} hp remaining)")
 
-    if health <= 3,
+    if health <= demage,
       do: {Map.put(board, target, ?.), Map.delete(players_map, target), :cont},
-      else: {board, Map.put(players_map, target, {type, health - 3}), :cont}
+      else: {board, Map.put(players_map, target, {uid, type, health - demage, force}), :cont}
   end
 
   defp attack_candidate(_board, players_map, {{x, y}, _} = player) do
@@ -172,7 +241,7 @@ defmodule AdventOfCode2018.Day15 do
 
   defp player_health(players_map, type, point) do
     case Map.get(players_map, point) do
-      {^type, health} -> health
+      {_, ^type, health, _} -> health
       _ -> nil
     end
   end
@@ -212,7 +281,7 @@ defmodule AdventOfCode2018.Day15 do
     end
   end
 
-  defp enemy({_, {type, _}}), do: if type == ?E, do: ?G, else: ?E
+  defp enemy({_, {_, type, _, _}}), do: if type == ?E, do: ?G, else: ?E
 
   defp print({board, players, status}, width, height, label) do
     IO.puts ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> #{label} <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< #{status}"
@@ -231,7 +300,7 @@ defmodule AdventOfCode2018.Day15 do
     players
     |> Enum.filter(fn {{_, player_y}, _} -> player_y == y end)
     |> Enum.sort(fn {{x1, _}, _}, {{x2, _}, _} -> x1 <= x2 end)
-    |> Enum.each(fn {_, {type, hp}} ->
+    |> Enum.each(fn {_, {_, type, hp, _}} ->
       IO.write("#{[type]}#{hp} ")
     end)
     IO.write("\n")
@@ -245,28 +314,29 @@ defmodule AdventOfCode2018.Day15 do
   end
 
   defp parse(file_stream) do
-    {board, players, y_max, x_max} =
+    {board, players, y_max, x_max, _, _} =
       file_stream
-      |> Enum.reduce({%{}, [], 0, 0}, fn line, {board, players, y, _} ->
-        {new_board, new_players, x_max} =
+      |> Enum.reduce({%{}, [], 0, 0, 0, 0}, fn line, {board, players, y, _, g, e} ->
+        {new_board, new_players, x_max, new_g, new_e} =
           line
           |> String.trim()
           |> String.to_charlist()
-          |> Enum.reduce({board, players, 0}, fn ch, {board, players, x} ->
-            new_players =
+          |> Enum.reduce({board, players, 0, g, e}, fn ch, {board, players, x, g, e} ->
+            {new_players, new_g, new_e} =
               case ch do
-                ?G -> [{{x,y}, {?G, 200}} | players]
-                ?E -> [{{x,y}, {?E, 200}} | players]
-                _  -> players
+                ?G -> {[{{x,y}, {"Goblin #{g}", ?G, 200, 3}} | players], g + 1, e}
+                ?E -> {[{{x,y}, {"Elf #{e}", ?E, 200, 3}} | players], g, e + 1}
+                _  -> {players, g, e}
               end
-            {Map.put(board, {x, y}, ch), new_players, x + 1}
+            {Map.put(board, {x, y}, ch), new_players, x + 1, new_g, new_e}
           end)
-        {new_board, new_players, y + 1, x_max}
+        {new_board, new_players, y + 1, x_max, new_g, new_e}
       end)
 
     {board, players, x_max - 1, y_max - 1}
   end
 
-  def part2(args) do
+  defp uid do
+    Integer.to_string(:rand.uniform(4294967296), 32)
   end
 end
